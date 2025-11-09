@@ -1,0 +1,10 @@
+Order ID,Order Date,Guest First Name,Guest Last Name,Email,Order Type,Item Name,Category,Quantity,Unit Price,Subtotal,Order Total,Status
+6,2025-11-01 11:53:51,John,Smith,john.smith@email.com,room_service,Caesar Salad,Appetizers,2,220.0,440.0,440.0,pending
+5,2025-11-01 11:38:25,John,Smith,john.smith@email.com,dine_in,Caesar Salad,Appetizers,2,220.0,440.0,440.0,pending
+4,2025-11-01 11:33:33,John,Smith,john.smith@email.com,dine_in,Grilled Salmon,Main Course,2,350.0,700.0,700.0,pending
+3,2025-11-01 11:32:49,John,Smith,john.smith@email.com,room_service,Tomato Soup,Appetizers,1,160.0,160.0,160.0,pending
+1,2025-10-31 22:13:42,John,Smith,john.smith@email.com,room_service,Grilled Salmon,Main Course,1,28.0,28.0,45.0,completed
+1,2025-10-31 22:13:42,John,Smith,john.smith@email.com,room_service,Orange Juice,Beverages,1,6.0,6.0,45.0,completed
+1,2025-10-31 22:13:42,John,Smith,john.smith@email.com,room_service,Cappuccino,Beverages,2,5.0,10.0,45.0,completed
+2,2025-10-31 22:13:42,Michael,Brown,michael.b@email.com,dine_in,Caesar Salad,Appetizers,1,12.0,12.0,75.0,completed
+2,2025-10-31 22:13:42,Michael,Brown,michael.b@email.com,dine_in,Beef Steak,Main Course,2,35.0,70.0,75.0,completed
