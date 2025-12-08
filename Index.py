@@ -1,57 +1,688 @@
 import database as db
 from datetime import datetime, date, timedelta
-import csv
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-import os
 
 cursor = db.conn.cursor(dictionary=True)
 
 
 class RestoKitchen:
     def __init__(self):
+        self.user_type = None  # 'guest' or 'admin'
+        self.user_id = None
+        self.user_info = None
         self.guest_id = None
         self.guest_info = None
         self.categories = self.get_categories()
         self.cart = []
         self.current_booking_id = None
 
-    def main(self):
-        """Main menu"""
+    def login(self):
+        """Login function to determine user type"""
         while True:
             print("\n" + "=" * 50)
-            print("=== RESTAURANT & KITCHEN MODULE ===")
+            print("=== HOTEL RESTAURANT SYSTEM ===")
             print("=" * 50)
-            print("1. Take Orders")
-            print("2. Sales Report")
-            print("3. Inventory Management")
-            print("4. Analytics & Reports (CSV/Graphs)")
-            print("5. Exit")
+            print("1. Guest Login")
+            print("2. Admin Login")
+            print("3. Exit")
+            print("=" * 50)
+
+            try:
+                choice = int(input("Select login type: "))
+
+                if choice == 1:
+                    if self.guest_login():
+                        self.user_type = 'guest'
+                        return True
+                elif choice == 2:
+                    if self.admin_login():
+                        self.user_type = 'admin'
+                        return True
+                elif choice == 3:
+                    print("Thank you for using Hotel Restaurant System!")
+                    return False
+                else:
+                    print("Invalid option!")
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+
+    def guest_login(self):
+        """Guest login using guest ID"""
+        try:
+            print("\n" + "=" * 50)
+            print("GUEST LOGIN")
+            print("=" * 50)
+            guest_id = input("Enter your Guest ID (or 'back' to return): ").strip()
+
+            if guest_id.lower() == 'back':
+                return False
+
+            guest_id = int(guest_id)
+
+            query = "SELECT * FROM guests WHERE guest_id = %s"
+            cursor.execute(query, (guest_id,))
+            guest = cursor.fetchone()
+
+            if guest:
+                self.guest_id = guest['guest_id']
+                self.guest_info = guest
+                self.user_id = guest['guest_id']
+                self.user_info = guest
+                self.current_booking_id = self.get_active_booking(self.guest_id)
+
+                print(f"\n✓ Welcome, {guest['first_name']} {guest['last_name']}!")
+                input("Press Enter to continue...")
+                return True
+            else:
+                print("Guest ID not found!")
+                return False
+        except ValueError:
+            print("Invalid Guest ID format!")
+            return False
+        except Exception as e:
+            print(f"Login error: {e}")
+            return False
+
+    def admin_login(self):
+        """Admin login using username and password"""
+        try:
+            print("\n" + "=" * 50)
+            print("ADMIN LOGIN")
+            print("=" * 50)
+            username = input("Username (or 'back' to return): ").strip()
+
+            if username.lower() == 'back':
+                return False
+
+            password = input("Password: ").strip()
+
+            query = "SELECT * FROM staff WHERE username = %s AND password = %s AND role IN ('admin', 'kitchen', 'restaurant', 'manager')"
+            cursor.execute(query, (username, password))
+            admin = cursor.fetchone()
+
+            if admin:
+                self.user_id = admin['staff_id']
+                self.user_info = admin
+                print(f"\n✓ Welcome, {admin['first_name']} {admin['last_name']} ({admin['role']})!")
+                input("Press Enter to continue...")
+                return True
+            else:
+                print("Invalid credentials or insufficient permissions!")
+                return False
+        except Exception as e:
+            print(f"Login error: {e}")
+            return False
+
+    def main(self):
+        """Main menu dispatcher"""
+        if not self.login():
+            return
+
+        if self.user_type == 'guest':
+            self.guest_main_menu()
+        elif self.user_type == 'admin':
+            self.admin_main_menu()
+
+    def guest_main_menu(self):
+        """Guest main menu"""
+        while True:
+            print("\n" + "=" * 50)
+            print(f"=== GUEST MENU - {self.guest_info['first_name']} {self.guest_info['last_name']} ===")
+            print("=" * 50)
+            print("1. Browse Menu & Place Order")
+            print("2. View My Orders")
+            print("3. View Cart")
+            print("4. Logout")
             print("=" * 50)
 
             try:
                 choice = int(input("Select option: "))
 
                 if choice == 1:
-                    self.take_orders()
+                    self.guest_place_order()
                 elif choice == 2:
-                    self.sales_report_menu()
+                    self.guest_view_orders()
                 elif choice == 3:
-                    self.inventory_management()
+                    self.display_cart()
                 elif choice == 4:
-                    self.analytics_menu()
-                elif choice == 5:
-                    print("Exiting Restaurant & Kitchen Module...")
+                    print("Logging out...")
+                    self.logout()
                     break
                 else:
-                    print("Invalid option! Please select 1-5.")
+                    print("Invalid option! Please select 1-4.")
             except ValueError:
                 print("Invalid input! Please enter a number.")
             except Exception as e:
                 print(f"An error occurred: {e}")
 
+    def admin_main_menu(self):
+        """Admin main menu"""
+        while True:
+            print("\n" + "=" * 50)
+            print(f"=== ADMIN MENU - {self.user_info['first_name']} {self.user_info['last_name']} ===")
+            print("=" * 50)
+            print("1. Take Orders (For Guests)")
+            print("2. Sales Reports")
+            print("3. Inventory Management")
+            print("4. Menu Management")
+            print("5. Order Management")
+            print("6. Logout")
+            print("=" * 50)
+
+            try:
+                choice = int(input("Select option: "))
+
+                if choice == 1:
+                    self.admin_take_orders()
+                elif choice == 2:
+                    self.sales_report_menu()
+                elif choice == 3:
+                    self.inventory_management()
+                elif choice == 4:
+                    self.menu_management()
+                elif choice == 5:
+                    self.order_management()
+                elif choice == 6:
+                    print("Logging out...")
+                    self.logout()
+                    break
+                else:
+                    print("Invalid option! Please select 1-6.")
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+
+    def logout(self):
+        """Clear session data"""
+        self.user_type = None
+        self.user_id = None
+        self.user_info = None
+        self.guest_id = None
+        self.guest_info = None
+        self.cart = []
+        self.current_booking_id = None
+
+    # ========== GUEST FUNCTIONS ==========
+
+    def guest_place_order(self):
+        """Guest places their own order"""
+        self.cart = []  # Reset cart
+
+        print(f"\n{'=' * 50}")
+        print(f"PLACING ORDER FOR: {self.guest_info['first_name']} {self.guest_info['last_name']}")
+        print(f"{'=' * 50}")
+
+        while True:
+            print("\n--- ORDER MENU ---")
+            print("1. Browse Menu & Add Items")
+            print("2. View Cart")
+            print("3. Checkout")
+            print("4. Clear Cart")
+            print("5. Cancel")
+
+            try:
+                choice = int(input("\nSelect option: "))
+
+                if choice == 1:
+                    self.browse_and_add_items()
+                elif choice == 2:
+                    self.display_cart()
+                elif choice == 3:
+                    if self.cart:
+                        self.checkout()
+                        break
+                    else:
+                        print("Your cart is empty! Add items first.")
+                elif choice == 4:
+                    self.cart.clear()
+                    print("Cart cleared!")
+                elif choice == 5:
+                    print("Order cancelled!")
+                    break
+                else:
+                    print("Invalid option!")
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+
+    def guest_view_orders(self):
+        """View guest's order history"""
+        try:
+            query = """
+            SELECT 
+                ro.order_id,
+                ro.order_date,
+                ro.order_type,
+                ro.total_amount,
+                ro.order_status
+            FROM restaurant_orders ro
+            WHERE ro.guest_id = %s
+            ORDER BY ro.order_date DESC
+            LIMIT 20
+            """
+            cursor.execute(query, (self.guest_id,))
+            orders = cursor.fetchall()
+
+            if not orders:
+                print("\nYou have no orders yet.")
+                return
+
+            print("\n" + "=" * 80)
+            print("YOUR ORDER HISTORY")
+            print("=" * 80)
+            print(f"{'Order ID':<12} {'Date':<20} {'Type':<15} {'Amount':<12} {'Status':<12}")
+            print("-" * 80)
+
+            for order in orders:
+                print(f"{order['order_id']:<12} {str(order['order_date']):<20} {order['order_type']:<15} "
+                      f"₱{float(order['total_amount']):<11.2f} {order['order_status']:<12}")
+
+            print("=" * 80)
+
+            # Option to view order details
+            view_detail = input("\nEnter Order ID to view details (or press Enter to return): ").strip()
+            if view_detail:
+                try:
+                    order_id = int(view_detail)
+                    self.view_order_details(order_id)
+                except ValueError:
+                    print("Invalid Order ID!")
+
+        except Exception as e:
+            print(f"Error viewing orders: {e}")
+
+    def view_order_details(self, order_id):
+        """View detailed items of an order"""
+        try:
+            query = """
+            SELECT 
+                mi.item_name,
+                oi.quantity,
+                oi.unit_price,
+                (oi.quantity * oi.unit_price) as subtotal
+            FROM order_items oi
+            JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
+            WHERE oi.order_id = %s
+            """
+            cursor.execute(query, (order_id,))
+            items = cursor.fetchall()
+
+            if not items:
+                print("Order not found or no items!")
+                return
+
+            print("\n" + "=" * 70)
+            print(f"ORDER #{order_id} DETAILS")
+            print("=" * 70)
+            print(f"{'Item Name':<35} {'Qty':<8} {'Price':<12} {'Subtotal':<12}")
+            print("-" * 70)
+
+            total = 0
+            for item in items:
+                print(f"{item['item_name']:<35} {item['quantity']:<8} "
+                      f"₱{float(item['unit_price']):<11.2f} ₱{float(item['subtotal']):<11.2f}")
+                total += float(item['subtotal'])
+
+            print("-" * 70)
+            print(f"{'TOTAL:':<55} ₱{total:.2f}")
+            print("=" * 70)
+
+        except Exception as e:
+            print(f"Error viewing order details: {e}")
+
+    # ========== ADMIN FUNCTIONS ==========
+
+    def admin_take_orders(self):
+        """Admin takes orders for guests"""
+        guest = self.search_guest()
+
+        if not guest:
+            print("Order cancelled - no guest selected.")
+            return
+
+        self.guest_id = guest['guest_id']
+        self.guest_info = guest
+        self.current_booking_id = self.get_active_booking(self.guest_id)
+        self.cart = []
+
+        print(f"\n{'=' * 50}")
+        print(f"Processing order for: {guest['first_name']} {guest['last_name']}")
+        print(f"{'=' * 50}")
+
+        while True:
+            print("\n--- ORDER MENU ---")
+            print("1. Browse Menu & Add Items")
+            print("2. View Cart")
+            print("3. Checkout")
+            print("4. Clear Cart")
+            print("5. Cancel Order")
+
+            try:
+                choice = int(input("\nSelect option: "))
+
+                if choice == 1:
+                    self.browse_and_add_items()
+                elif choice == 2:
+                    self.display_cart()
+                elif choice == 3:
+                    if self.cart:
+                        self.checkout()
+                        break
+                    else:
+                        print("Cart is empty! Add items first.")
+                elif choice == 4:
+                    self.cart.clear()
+                    print("Cart cleared!")
+                elif choice == 5:
+                    print("Order cancelled!")
+                    break
+                else:
+                    print("Invalid option!")
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+
+    def menu_management(self):
+        """Manage menu items"""
+        while True:
+            print("\n" + "=" * 50)
+            print("MENU MANAGEMENT")
+            print("=" * 50)
+            print("1. View All Menu Items")
+            print("2. Add Menu Item")
+            print("3. Update Menu Item")
+            print("4. Toggle Item Availability")
+            print("5. Back to Main Menu")
+
+            try:
+                choice = int(input("\nSelect option: "))
+
+                if choice == 1:
+                    self.view_all_menu_items()
+                elif choice == 2:
+                    self.add_menu_item()
+                elif choice == 3:
+                    self.update_menu_item()
+                elif choice == 4:
+                    self.toggle_item_availability()
+                elif choice == 5:
+                    break
+                else:
+                    print("Invalid option!")
+            except ValueError:
+                print("Invalid input!")
+
+    def view_all_menu_items(self):
+        """View all menu items"""
+        try:
+            query = """
+            SELECT 
+                mi.menu_item_id,
+                mi.item_name,
+                mc.category_name,
+                mi.price,
+                mi.is_available
+            FROM menu_items mi
+            JOIN menu_categories mc ON mc.category_id = mi.category_id
+            ORDER BY mc.category_id, mi.menu_item_id
+            """
+            cursor.execute(query)
+            items = cursor.fetchall()
+
+            print("\n" + "=" * 90)
+            print("ALL MENU ITEMS")
+            print("=" * 90)
+            print(f"{'ID':<5} {'Item Name':<35} {'Category':<20} {'Price':<12} {'Available':<12}")
+            print("-" * 90)
+
+            for item in items:
+                available = "Yes" if item['is_available'] else "No"
+                print(f"{item['menu_item_id']:<5} {item['item_name']:<35} {item['category_name']:<20} "
+                      f"₱{float(item['price']):<11.2f} {available:<12}")
+
+            print("=" * 90)
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def add_menu_item(self):
+        """Add new menu item"""
+        try:
+            print("\n--- ADD MENU ITEM ---")
+
+            # Show categories
+            print("\nCategories:")
+            for cat in self.categories:
+                print(f"{cat['category_id']}. {cat['category_name']}")
+
+            category_id = int(input("\nEnter category ID: "))
+            item_name = input("Enter item name: ").strip()
+            price = float(input("Enter price: "))
+
+            query = """
+            INSERT INTO menu_items (item_name, category_id, price, is_available)
+            VALUES (%s, %s, %s, 1)
+            """
+            cursor.execute(query, (item_name, category_id, price))
+            db.conn.commit()
+
+            print(f"\n✓ Menu item '{item_name}' added successfully!")
+
+        except ValueError:
+            print("Invalid input!")
+        except Exception as e:
+            db.conn.rollback()
+            print(f"Error: {e}")
+
+    def update_menu_item(self):
+        """Update menu item price"""
+        try:
+            item_id = int(input("\nEnter menu item ID to update: "))
+
+            query = "SELECT * FROM menu_items WHERE menu_item_id = %s"
+            cursor.execute(query, (item_id,))
+            item = cursor.fetchone()
+
+            if not item:
+                print("Menu item not found!")
+                return
+
+            print(f"\nCurrent item: {item['item_name']}")
+            print(f"Current price: ₱{float(item['price']):.2f}")
+
+            new_price = float(input("Enter new price: "))
+
+            update_query = "UPDATE menu_items SET price = %s WHERE menu_item_id = %s"
+            cursor.execute(update_query, (new_price, item_id))
+            db.conn.commit()
+
+            print(f"\n✓ Price updated successfully!")
+
+        except ValueError:
+            print("Invalid input!")
+        except Exception as e:
+            db.conn.rollback()
+            print(f"Error: {e}")
+
+    def toggle_item_availability(self):
+        """Toggle menu item availability"""
+        try:
+            item_id = int(input("\nEnter menu item ID: "))
+
+            query = "SELECT * FROM menu_items WHERE menu_item_id = %s"
+            cursor.execute(query, (item_id,))
+            item = cursor.fetchone()
+
+            if not item:
+                print("Menu item not found!")
+                return
+
+            new_status = 0 if item['is_available'] else 1
+            status_text = "Available" if new_status else "Unavailable"
+
+            update_query = "UPDATE menu_items SET is_available = %s WHERE menu_item_id = %s"
+            cursor.execute(update_query, (new_status, item_id))
+            db.conn.commit()
+
+            print(f"\n✓ {item['item_name']} is now {status_text}!")
+
+        except ValueError:
+            print("Invalid input!")
+        except Exception as e:
+            db.conn.rollback()
+            print(f"Error: {e}")
+
+    def order_management(self):
+        """Manage orders"""
+        while True:
+            print("\n" + "=" * 50)
+            print("ORDER MANAGEMENT")
+            print("=" * 50)
+            print("1. View All Orders")
+            print("2. View Pending Orders")
+            print("3. Update Order Status")
+            print("4. View Order Details")
+            print("5. Back to Main Menu")
+
+            try:
+                choice = int(input("\nSelect option: "))
+
+                if choice == 1:
+                    self.view_all_orders()
+                elif choice == 2:
+                    self.view_pending_orders()
+                elif choice == 3:
+                    self.update_order_status()
+                elif choice == 4:
+                    order_id = int(input("Enter Order ID: "))
+                    self.view_order_details(order_id)
+                elif choice == 5:
+                    break
+                else:
+                    print("Invalid option!")
+            except ValueError:
+                print("Invalid input!")
+
+    def view_all_orders(self):
+        """View all orders"""
+        try:
+            query = """
+            SELECT 
+                ro.order_id,
+                ro.order_date,
+                g.first_name,
+                g.last_name,
+                ro.order_type,
+                ro.total_amount,
+                ro.order_status
+            FROM restaurant_orders ro
+            JOIN guests g ON g.guest_id = ro.guest_id
+            ORDER BY ro.order_date DESC
+            LIMIT 50
+            """
+            cursor.execute(query)
+            orders = cursor.fetchall()
+
+            print("\n" + "=" * 100)
+            print("ALL ORDERS")
+            print("=" * 100)
+            print(f"{'ID':<8} {'Date':<20} {'Guest':<25} {'Type':<15} {'Amount':<12} {'Status':<12}")
+            print("-" * 100)
+
+            for order in orders:
+                guest_name = f"{order['first_name']} {order['last_name']}"
+                print(f"{order['order_id']:<8} {str(order['order_date']):<20} {guest_name:<25} "
+                      f"{order['order_type']:<15} ₱{float(order['total_amount']):<11.2f} {order['order_status']:<12}")
+
+            print("=" * 100)
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def view_pending_orders(self):
+        """View pending orders"""
+        try:
+            query = """
+            SELECT 
+                ro.order_id,
+                ro.order_date,
+                g.first_name,
+                g.last_name,
+                ro.order_type,
+                ro.total_amount
+            FROM restaurant_orders ro
+            JOIN guests g ON g.guest_id = ro.guest_id
+            WHERE ro.order_status = 'pending'
+            ORDER BY ro.order_date ASC
+            """
+            cursor.execute(query)
+            orders = cursor.fetchall()
+
+            if not orders:
+                print("\n✓ No pending orders!")
+                return
+
+            print("\n" + "=" * 90)
+            print("PENDING ORDERS")
+            print("=" * 90)
+            print(f"{'ID':<8} {'Date':<20} {'Guest':<30} {'Type':<15} {'Amount':<12}")
+            print("-" * 90)
+
+            for order in orders:
+                guest_name = f"{order['first_name']} {order['last_name']}"
+                print(f"{order['order_id']:<8} {str(order['order_date']):<20} {guest_name:<30} "
+                      f"{order['order_type']:<15} ₱{float(order['total_amount']):<11.2f}")
+
+            print("=" * 90)
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def update_order_status(self):
+        """Update order status"""
+        try:
+            order_id = int(input("\nEnter Order ID: "))
+
+            query = "SELECT * FROM restaurant_orders WHERE order_id = %s"
+            cursor.execute(query, (order_id,))
+            order = cursor.fetchone()
+
+            if not order:
+                print("Order not found!")
+                return
+
+            print(f"\nCurrent status: {order['order_status']}")
+            print("\nNew status options:")
+            print("1. pending")
+            print("2. preparing")
+            print("3. completed")
+            print("4. cancelled")
+
+            choice = int(input("Select new status: "))
+            statuses = {1: 'pending', 2: 'preparing', 3: 'completed', 4: 'cancelled'}
+
+            if choice not in statuses:
+                print("Invalid choice!")
+                return
+
+            new_status = statuses[choice]
+
+            update_query = "UPDATE restaurant_orders SET order_status = %s WHERE order_id = %s"
+            cursor.execute(update_query, (new_status, order_id))
+            db.conn.commit()
+
+            print(f"\n✓ Order #{order_id} status updated to '{new_status}'!")
+
+        except ValueError:
+            print("Invalid input!")
+        except Exception as e:
+            db.conn.rollback()
+            print(f"Error: {e}")
+
+    # ========== SHARED FUNCTIONS ==========
+
     def search_guest(self):
-        """Search and select a guest"""
+        """Search and select a guest (Admin only)"""
         print("\n" + "=" * 50)
         print("GUEST SEARCH")
         print("=" * 50)
@@ -116,7 +747,6 @@ class RestoKitchen:
                 return guests[0]
             return None
 
-        # Multiple guests found
         print(f"\nFound {len(guests)} guests:")
         print("-" * 80)
         print(f"{'ID':<5} {'Name':<30} {'Email':<30} {'Phone':<15}")
@@ -186,7 +816,6 @@ class RestoKitchen:
         print(f"Phone:        {guest['phone']}")
         print(f"Nationality:  {guest['nationality']}")
 
-        # Check for active booking
         booking_query = """
         SELECT b.*, r.room_number, rt.type_name 
         FROM bookings b
@@ -244,11 +873,11 @@ class RestoKitchen:
     def display_cart(self):
         """Display current cart contents"""
         if not self.cart:
-            print("\nYour cart is empty!")
+            print("\nCart is empty!")
             return
 
         print("\n" + "=" * 70)
-        print("YOUR CART")
+        print("CART")
         print("=" * 70)
         print(f"{'Item Name':<30} {'Quantity':<10} {'Price':<10} {'Subtotal':<10}")
         print("-" * 70)
@@ -262,56 +891,6 @@ class RestoKitchen:
         print("-" * 70)
         print(f"{'TOTAL:':<50} ₱{total:.2f}")
         print("=" * 70)
-
-    def take_orders(self):
-        """Main ordering function"""
-        # Search and select guest
-        guest = self.search_guest()
-
-        if not guest:
-            print("Order cancelled - no guest selected.")
-            return
-
-        self.guest_id = guest['guest_id']
-        self.guest_info = guest
-        self.current_booking_id = self.get_active_booking(self.guest_id)
-        self.cart = []  # Reset cart
-
-        print(f"\n{'=' * 50}")
-        print(f"Processing order for: {guest['first_name']} {guest['last_name']}")
-        print(f"{'=' * 50}")
-
-        while True:
-            print("\n--- ORDER MENU ---")
-            print("1. Browse Menu & Add Items")
-            print("2. View Cart")
-            print("3. Checkout")
-            print("4. Clear Cart")
-            print("5. Cancel Order")
-
-            try:
-                choice = int(input("\nSelect option: "))
-
-                if choice == 1:
-                    self.browse_and_add_items()
-                elif choice == 2:
-                    self.display_cart()
-                elif choice == 3:
-                    if self.cart:
-                        self.checkout()
-                        break  # Exit after successful checkout
-                    else:
-                        print("Your cart is empty! Add items first.")
-                elif choice == 4:
-                    self.cart.clear()
-                    print("Cart cleared!")
-                elif choice == 5:
-                    print("Order cancelled!")
-                    break
-                else:
-                    print("Invalid option!")
-            except ValueError:
-                print("Invalid input! Please enter a number.")
 
     def browse_and_add_items(self):
         """Browse menu categories and add items to cart"""
@@ -351,13 +930,11 @@ class RestoKitchen:
 
             print("-" * 70)
 
-            # Add item to cart
             item_id = int(input("\nEnter item ID to add (0 to cancel): "))
 
             if item_id == 0:
                 return
 
-            # Find the item
             selected_item = None
             for item in items:
                 if item['menu_item_id'] == item_id:
@@ -374,7 +951,6 @@ class RestoKitchen:
                 print("Invalid quantity!")
                 return
 
-            # Add to cart
             cart_item = {
                 'menu_item_id': selected_item['menu_item_id'],
                 'item_name': selected_item['item_name'],
@@ -382,7 +958,6 @@ class RestoKitchen:
                 'quantity': quantity
             }
 
-            # Check if item already in cart
             found = False
             for item in self.cart:
                 if item['menu_item_id'] == cart_item['menu_item_id']:
@@ -419,7 +994,6 @@ class RestoKitchen:
 
             order_type = order_types[order_type_choice]
 
-            # Calculate total
             total_amount = sum(item['quantity'] * item['price'] for item in self.cart)
 
             confirm = input(f"\nConfirm order? Total: ₱{total_amount:.2f} (yes/no): ").lower()
@@ -428,7 +1002,6 @@ class RestoKitchen:
                 print("Order cancelled!")
                 return
 
-            # Insert order into restaurant_orders
             insert_order_query = """
             INSERT INTO restaurant_orders 
             (booking_id, guest_id, order_type, total_amount, order_status, order_date)
@@ -439,7 +1012,6 @@ class RestoKitchen:
 
             order_id = cursor.lastrowid
 
-            # Insert order items
             for item in self.cart:
                 insert_item_query = """
                 INSERT INTO order_items 
@@ -449,7 +1021,6 @@ class RestoKitchen:
                 cursor.execute(insert_item_query,
                                (order_id, item['menu_item_id'], item['quantity'], item['price']))
 
-            # Update inventory (simplified)
             self.update_inventory_usage()
 
             db.conn.commit()
@@ -462,7 +1033,6 @@ class RestoKitchen:
             print(f"Order Type: {order_type.replace('_', ' ').title()}")
             print("=" * 50)
 
-            # Clear cart
             self.cart.clear()
 
         except Exception as e:
@@ -470,7 +1040,7 @@ class RestoKitchen:
             print(f"Error processing order: {e}")
 
     def update_inventory_usage(self):
-        """Update inventory based on order (simplified version)"""
+        """Update inventory based on order"""
         try:
             for item in self.cart:
                 query = """
@@ -1017,434 +1587,7 @@ class RestoKitchen:
             db.conn.rollback()
             print(f"Error restocking: {e}")
 
-    def analytics_menu(self):
-        """Analytics and reporting menu with CSV export and graphs"""
-        while True:
-            print("\n" + "=" * 70)
-            print("ANALYTICS & REPORTS")
-            print("=" * 70)
-            print("1. Export Sales Report to CSV")
-            print("2. Export Inventory Report to CSV")
-            print("3. Generate Sales Graph")
-            print("4. Generate Category Sales Chart")
-            print("5. Generate Inventory Status Chart")
-            print("6. Generate Top Items Chart")
-            print("7. Back to Main Menu")
 
-            try:
-                choice = int(input("\nSelect option: "))
-
-                if choice == 1:
-                    self.export_sales_csv()
-                elif choice == 2:
-                    self.export_inventory_csv()
-                elif choice == 3:
-                    self.generate_sales_graph()
-                elif choice == 4:
-                    self.generate_category_chart()
-                elif choice == 5:
-                    self.generate_inventory_chart()
-                elif choice == 6:
-                    self.generate_top_items_chart()
-                elif choice == 7:
-                    break
-                else:
-                    print("Invalid option!")
-            except ValueError:
-                print("Invalid input!")
-            except Exception as e:
-                print(f"Error: {e}")
-
-    def export_sales_csv(self):
-        """Export sales data to CSV"""
-        try:
-            start_date = input("Enter start date (YYYY-MM-DD): ")
-            end_date = input("Enter end date (YYYY-MM-DD): ")
-
-            query = """
-            SELECT 
-                ro.order_id,
-                ro.order_date,
-                g.first_name,
-                g.last_name,
-                g.email,
-                ro.order_type,
-                mi.item_name,
-                mc.category_name,
-                oi.quantity,
-                oi.unit_price,
-                (oi.quantity * oi.unit_price) as subtotal,
-                ro.total_amount,
-                ro.order_status
-            FROM restaurant_orders ro
-            JOIN guests g ON g.guest_id = ro.guest_id
-            JOIN order_items oi ON oi.order_id = ro.order_id
-            JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
-            JOIN menu_categories mc ON mc.category_id = mi.category_id
-            WHERE DATE(ro.order_date) BETWEEN %s AND %s
-            ORDER BY ro.order_date DESC, ro.order_id
-            """
-            cursor.execute(query, (start_date, end_date))
-            results = cursor.fetchall()
-
-            if not results:
-                print("No data found for the specified date range!")
-                return
-
-            # Create reports directory if it doesn't exist
-            os.makedirs('reports', exist_ok=True)
-
-            filename = f'reports/sales_report_{start_date}_to_{end_date}.csv'
-
-            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['Order ID', 'Order Date', 'Guest First Name', 'Guest Last Name',
-                              'Email', 'Order Type', 'Item Name', 'Category', 'Quantity',
-                              'Unit Price', 'Subtotal', 'Order Total', 'Status']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-                writer.writeheader()
-                for row in results:
-                    writer.writerow({
-                        'Order ID': row['order_id'],
-                        'Order Date': row['order_date'],
-                        'Guest First Name': row['first_name'],
-                        'Guest Last Name': row['last_name'],
-                        'Email': row['email'],
-                        'Order Type': row['order_type'],
-                        'Item Name': row['item_name'],
-                        'Category': row['category_name'],
-                        'Quantity': row['quantity'],
-                        'Unit Price': float(row['unit_price']),
-                        'Subtotal': float(row['subtotal']),
-                        'Order Total': float(row['total_amount']),
-                        'Status': row['order_status']
-                    })
-
-            print(f"\n✓ Sales report exported successfully!")
-            print(f"File: {filename}")
-            print(f"Total records: {len(results)}")
-
-        except Exception as e:
-            print(f"Error exporting CSV: {e}")
-
-    def export_inventory_csv(self):
-        """Export inventory data to CSV"""
-        try:
-            query = """
-            SELECT 
-                ii.item_id,
-                ii.item_name,
-                ic.category_name,
-                ii.quantity_in_stock,
-                ii.minimum_quantity,
-                ii.unit_cost,
-                (ii.quantity_in_stock * ii.unit_cost) as total_value,
-                CASE 
-                    WHEN ii.quantity_in_stock <= ii.minimum_quantity THEN 'Low Stock'
-                    ELSE 'OK'
-                END as status
-            FROM inventory_items ii
-            JOIN inventory_categories ic ON ic.category_id = ii.category_id
-            ORDER BY ii.item_id ASC
-            """
-            cursor.execute(query)
-            results = cursor.fetchall()
-
-            os.makedirs('reports', exist_ok=True)
-
-            filename = f'reports/inventory_report_{date.today()}.csv'
-
-            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['Item ID', 'Item Name', 'Category', 'Quantity in Stock',
-                              'Minimum Quantity', 'Unit Cost', 'Total Value', 'Status']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-                writer.writeheader()
-                for row in results:
-                    writer.writerow({
-                        'Item ID': row['item_id'],
-                        'Item Name': row['item_name'],
-                        'Category': row['category_name'],
-                        'Quantity in Stock': float(row['quantity_in_stock']),
-                        'Minimum Quantity': float(row['minimum_quantity']),
-                        'Unit Cost': float(row['unit_cost']),
-                        'Total Value': float(row['total_value']),
-                        'Status': row['status']
-                    })
-
-            print(f"\n✓ Inventory report exported successfully!")
-            print(f"File: {filename}")
-            print(f"Total items: {len(results)}")
-
-        except Exception as e:
-            print(f"Error exporting CSV: {e}")
-
-    def generate_sales_graph(self):
-        """Generate sales trend graph"""
-        try:
-            days = int(input("Enter number of days to analyze (default 30): ") or "30")
-
-            end_date = date.today()
-            start_date = end_date - timedelta(days=days)
-
-            query = """
-            SELECT 
-                DATE(ro.order_date) as sale_date,
-                COUNT(ro.order_id) as total_orders,
-                SUM(ro.total_amount) as daily_sales
-            FROM restaurant_orders ro
-            WHERE DATE(ro.order_date) BETWEEN %s AND %s
-            GROUP BY DATE(ro.order_date)
-            ORDER BY sale_date
-            """
-            cursor.execute(query, (start_date, end_date))
-            results = cursor.fetchall()
-
-            if not results:
-                print("No sales data found for the specified period!")
-                return
-
-            dates = [row['sale_date'] for row in results]
-            sales = [float(row['daily_sales']) for row in results]
-            orders = [row['total_orders'] for row in results]
-
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
-
-            # Sales trend
-            ax1.plot(dates, sales, marker='o', linestyle='-', color='green', linewidth=2)
-            ax1.set_xlabel('Date')
-            ax1.set_ylabel('Sales (₱)', color='green')
-            ax1.set_title(f'Daily Sales Trend ({start_date} to {end_date})')
-            ax1.grid(True, alpha=0.3)
-            ax1.tick_params(axis='x', rotation=45)
-
-            # Orders trend
-            ax2.bar(dates, orders, color='blue', alpha=0.7)
-            ax2.set_xlabel('Date')
-            ax2.set_ylabel('Number of Orders')
-            ax2.set_title('Daily Orders')
-            ax2.tick_params(axis='x', rotation=45)
-            ax2.grid(True, alpha=0.3)
-
-            plt.tight_layout()
-
-            os.makedirs('reports', exist_ok=True)
-            filename = f'reports/sales_trend_{date.today()}.png'
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
-
-            print(f"\n✓ Sales graph generated successfully!")
-            print(f"File: {filename}")
-
-            plt.show()
-
-        except ValueError:
-            print("Invalid input!")
-        except Exception as e:
-            print(f"Error generating graph: {e}")
-
-    def generate_category_chart(self):
-        """Generate category sales pie chart"""
-        try:
-            days = int(input("Enter number of days to analyze (default 30): ") or "30")
-
-            end_date = date.today()
-            start_date = end_date - timedelta(days=days)
-
-            query = """
-            SELECT 
-                mc.category_name,
-                SUM(oi.quantity * oi.unit_price) as category_sales
-            FROM restaurant_orders ro
-            JOIN order_items oi ON oi.order_id = ro.order_id
-            JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
-            JOIN menu_categories mc ON mc.category_id = mi.category_id
-            WHERE DATE(ro.order_date) BETWEEN %s AND %s
-            GROUP BY mc.category_id, mc.category_name
-            ORDER BY category_sales DESC
-            """
-            cursor.execute(query, (start_date, end_date))
-            results = cursor.fetchall()
-
-            if not results:
-                print("No sales data found!")
-                return
-
-            categories = [row['category_name'] for row in results]
-            sales = [float(row['category_sales']) for row in results]
-
-            fig, ax = plt.subplots(figsize=(10, 8))
-
-            colors = plt.cm.Set3(range(len(categories)))
-            wedges, texts, autotexts = ax.pie(sales, labels=categories, autopct='%1.1f%%',
-                                              colors=colors, startangle=90)
-
-            # Make percentage text bold
-            for autotext in autotexts:
-                autotext.set_color('white')
-                autotext.set_fontweight('bold')
-
-            ax.set_title(f'Sales by Category ({start_date} to {end_date})', fontsize=14, fontweight='bold')
-
-            # Add legend with sales amounts
-            legend_labels = [f'{cat}: ₱{sale:,.2f}' for cat, sale in zip(categories, sales)]
-            ax.legend(legend_labels, loc='center left', bbox_to_anchor=(1, 0, 0.5, 1))
-
-            plt.tight_layout()
-
-            os.makedirs('reports', exist_ok=True)
-            filename = f'reports/category_sales_{date.today()}.png'
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
-
-            print(f"\n✓ Category chart generated successfully!")
-            print(f"File: {filename}")
-
-            plt.show()
-
-        except ValueError:
-            print("Invalid input!")
-        except Exception as e:
-            print(f"Error generating chart: {e}")
-
-    def generate_inventory_chart(self):
-        """Generate inventory status bar chart"""
-        try:
-            query = """
-            SELECT 
-                ii.item_name,
-                ic.category_name,
-                ii.quantity_in_stock,
-                ii.minimum_quantity
-            FROM inventory_items ii
-            JOIN inventory_categories ic ON ic.category_id = ii.category_id
-            ORDER BY ic.category_name, ii.item_name
-            LIMIT 20
-            """
-            cursor.execute(query)
-            results = cursor.fetchall()
-
-            if not results:
-                print("No inventory data found!")
-                return
-
-            items = [row['item_name'][:20] for row in results]  # Truncate long names
-            current_stock = [float(row['quantity_in_stock']) for row in results]
-            min_stock = [float(row['minimum_quantity']) for row in results]
-
-            fig, ax = plt.subplots(figsize=(14, 8))
-
-            x = range(len(items))
-            width = 0.35
-
-            bars1 = ax.bar([i - width / 2 for i in x], current_stock, width, label='Current Stock', color='green',
-                           alpha=0.7)
-            bars2 = ax.bar([i + width / 2 for i in x], min_stock, width, label='Minimum Stock', color='red', alpha=0.7)
-
-            ax.set_xlabel('Items')
-            ax.set_ylabel('Quantity')
-            ax.set_title('Inventory Status - Current vs Minimum Stock', fontsize=14, fontweight='bold')
-            ax.set_xticks(x)
-            ax.set_xticklabels(items, rotation=45, ha='right')
-            ax.legend()
-            ax.grid(True, alpha=0.3, axis='y')
-
-            # Highlight low stock items
-            for i, (current, minimum) in enumerate(zip(current_stock, min_stock)):
-                if current <= minimum:
-                    bars1[i].set_color('orange')
-
-            plt.tight_layout()
-
-            os.makedirs('reports', exist_ok=True)
-            filename = f'reports/inventory_status_{date.today()}.png'
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
-
-            print(f"\n✓ Inventory chart generated successfully!")
-            print(f"File: {filename}")
-
-            plt.show()
-
-        except Exception as e:
-            print(f"Error generating chart: {e}")
-
-    def generate_top_items_chart(self):
-        """Generate top selling items bar chart"""
-        try:
-            limit = int(input("Enter number of top items to display (default 10): ") or "10")
-            days = int(input("Enter number of days to analyze (default 30): ") or "30")
-
-            end_date = date.today()
-            start_date = end_date - timedelta(days=days)
-
-            query = """
-            SELECT 
-                mi.item_name,
-                SUM(oi.quantity) as total_sold,
-                SUM(oi.quantity * oi.unit_price) as total_revenue
-            FROM order_items oi
-            JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
-            JOIN restaurant_orders ro ON ro.order_id = oi.order_id
-            WHERE DATE(ro.order_date) BETWEEN %s AND %s
-            GROUP BY mi.menu_item_id, mi.item_name
-            ORDER BY total_sold DESC
-            LIMIT %s
-            """
-            cursor.execute(query, (start_date, end_date, limit))
-            results = cursor.fetchall()
-
-            if not results:
-                print("No sales data found!")
-                return
-
-            items = [row['item_name'] for row in results]
-            quantities = [row['total_sold'] for row in results]
-            revenues = [float(row['total_revenue']) for row in results]
-
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-
-            # Quantities sold
-            colors1 = plt.cm.viridis(range(len(items)))
-            bars1 = ax1.barh(items, quantities, color=colors1)
-            ax1.set_xlabel('Quantity Sold')
-            ax1.set_title(f'Top {limit} Items by Quantity ({start_date} to {end_date})', fontweight='bold')
-            ax1.grid(True, alpha=0.3, axis='x')
-
-            # Add value labels
-            for bar in bars1:
-                width = bar.get_width()
-                ax1.text(width, bar.get_y() + bar.get_height() / 2,
-                         f'{int(width)}', ha='left', va='center', fontweight='bold')
-
-            # Revenue
-            colors2 = plt.cm.plasma(range(len(items)))
-            bars2 = ax2.barh(items, revenues, color=colors2)
-            ax2.set_xlabel('Revenue (₱)')
-            ax2.set_title(f'Top {limit} Items by Revenue', fontweight='bold')
-            ax2.grid(True, alpha=0.3, axis='x')
-
-            # Add value labels
-            for bar in bars2:
-                width = bar.get_width()
-                ax2.text(width, bar.get_y() + bar.get_height() / 2,
-                         f'₱{width:,.0f}', ha='left', va='center', fontweight='bold')
-
-            plt.tight_layout()
-
-            os.makedirs('reports', exist_ok=True)
-            filename = f'reports/top_items_{date.today()}.png'
-            plt.savefig(filename, dpi=300, bbox_inches='tight')
-
-            print(f"\n✓ Top items chart generated successfully!")
-            print(f"File: {filename}")
-
-            plt.show()
-
-        except ValueError:
-            print("Invalid input!")
-        except Exception as e:
-            print(f"Error generating chart: {e}")
-
-
-# Example usage
 if __name__ == "__main__":
     kitchen = RestoKitchen()
     kitchen.main()
