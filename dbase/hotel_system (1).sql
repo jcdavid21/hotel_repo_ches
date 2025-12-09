@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 08, 2025 at 09:29 AM
+-- Generation Time: Dec 09, 2025 at 01:03 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.0.28
 
@@ -365,7 +365,7 @@ CREATE TABLE `menu_items` (
 --
 
 INSERT INTO `menu_items` (`menu_item_id`, `item_name`, `category_id`, `price`, `is_available`) VALUES
-(1, 'Caesar Salad', 1, 220.00, 1),
+(1, 'Caesar Salad', 1, 221.00, 1),
 (2, 'Tomato Soup', 1, 160.00, 1),
 (3, 'Grilled Salmon', 2, 350.00, 1),
 (4, 'Beef Steak', 2, 350.00, 1),

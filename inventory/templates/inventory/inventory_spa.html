@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory & Supply Module</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Styles -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'inventory/css/styles.css' %}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        panel: '#1e293b',
+                        accent: '#38bdf8',
+                        danger: '#ef4444',
+                        success: '#22c55e'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-dark text-slate-100 font-sans h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-panel border-r border-slate-700 p-6 flex flex-col">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold tracking-tight">HMS <span class="text-accent">Module 4</span></h1>
+            <p class="text-sm text-slate-400">Inventory & Supply</p>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="#" class="block py-2.5 px-4 rounded bg-accent/10 text-accent font-medium">Dashboard</a>
+            <button onclick="app.openReports()"
+                class="w-full text-left block py-2.5 px-4 rounded hover:bg-slate-700 text-slate-300 transition">Reports</button>
+            <button onclick="app.openModal('settingsModal')"
+                class="w-full text-left block py-2.5 px-4 rounded hover:bg-slate-700 text-slate-300 transition">Settings</button>
+        </nav>
+        <div class="mt-auto pt-6 border-t border-slate-700">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs">JM</div>
+                <div>
+                    <p class="text-sm font-medium">Justin M.</p>
+                    <p class="text-xs text-slate-400">Manager</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="bg-panel border-b border-slate-700 px-8 py-4 flex justify-between items-center shadow-lg">
+            <h2 class="text-lg font-semibold text-slate-200">Inventory Dashboard</h2>
+            <div class="flex gap-3">
+                <button onclick="app.refreshInventory()" class="p-2 text-slate-400 hover:text-white transition"
+                    title="Refresh">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+                <button onclick="app.openModal('addModal')"
+                    class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-lg shadow-sky-500/20">
+                    + Add New Item
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats & Actions Bar -->
+        <div class="px-8 py-6 flex gap-6 overflow-x-auto">
+            <div onclick="app.openModal('updateStockModal')"
+                class="cursor-pointer bg-panel border border-slate-700 p-4 rounded-xl min-w-[200px] hover:border-accent/50 transition group">
+                <div class="text-slate-400 text-sm mb-1 group-hover:text-accent">Quick Action</div>
+                <div class="font-semibold text-lg">Update Stock</div>
+            </div>
+            <div onclick="app.openModal('cleaningModal')"
+                class="cursor-pointer bg-panel border border-slate-700 p-4 rounded-xl min-w-[200px] hover:border-accent/50 transition group">
+                <div class="text-slate-400 text-sm mb-1 group-hover:text-accent">Request</div>
+                <div class="font-semibold text-lg">Cleaning Supplies</div>
+            </div>
+            <div onclick="app.openModal('kitchenModal')"
+                class="cursor-pointer bg-panel border border-slate-700 p-4 rounded-xl min-w-[200px] hover:border-accent/50 transition group">
+                <div class="text-slate-400 text-sm mb-1 group-hover:text-accent">Request</div>
+                <div class="font-semibold text-lg">Investigator/Kitchen</div>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="flex-1 px-8 pb-8 overflow-y-auto">
+            <div class="bg-panel rounded-xl border border-slate-700 overflow-hidden shadow-xl">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-800 text-slate-400 text-sm uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700">Item Name</th>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700">Category</th>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700">In Stock</th>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700">Status</th>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700">Cost</th>
+                            <th class="px-6 py-4 font-medium border-b border-slate-700 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody" class="divide-y divide-slate-700 text-sm">
+                        <!-- Rows populated by JS -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">Loading inventory...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- MODALS -->
+
+    <!-- Add Item Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div
+            class="bg-panel w-full max-w-md p-6 rounded-xl border border-slate-600 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-xl font-bold mb-4">Add New Item</h3>
+            <form onsubmit="app.handleAddItem(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Item Name</label>
+                    <input type="text" name="name" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Category</label>
+                        <select name="category"
+                            class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                            <option>Cleaning Supplies</option>
+                            <option>Food Ingredients</option>
+                            <option>Linens</option>
+                            <option>Beverages</option>
+                            <option>Toiletries</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Unit Cost</label>
+                        <input type="number" step="0.01" name="cost" required
+                            class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Initial Quantity</label>
+                    <input type="number" name="quantity" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="app.closeModal('addModal')"
+                        class="px-4 py-2 text-slate-300 hover:text-white transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded font-semibold transition">Add
+                        Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Stock Modal -->
+    <div id="updateStockModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div class="bg-panel w-full max-w-md p-6 rounded-xl border border-slate-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">Update Stock Level</h3>
+            <form onsubmit="app.handleUpdateStock(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Item Name</label>
+                    <select id="updateStockSelect" name="name"
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Quantity to Add/Remove</label>
+                    <input type="number" name="quantity" placeholder="e.g. 10 or -5" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                    <p class="text-xs text-slate-500 mt-1">Use negative numbers to reduce stock manually.</p>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="app.closeModal('updateStockModal')"
+                        class="px-4 py-2 text-slate-300 hover:text-white transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded font-semibold transition">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cleaning Request Modal -->
+    <div id="cleaningModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div class="bg-panel w-full max-w-md p-6 rounded-xl border border-slate-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">Request Cleaning Supplies</h3>
+            <form onsubmit="app.handleRequestCleaning(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Staff Name</label>
+                    <input type="text" name="staff_name" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Item</label>
+                    <select id="cleaningSelect" name="item_name"
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Quantity Needed</label>
+                    <input type="number" name="quantity" min="1" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="app.closeModal('cleaningModal')"
+                        class="px-4 py-2 text-slate-300 hover:text-white transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded font-semibold transition">Submit
+                        Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kitchen Request Modal -->
+    <div id="kitchenModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div class="bg-panel w-full max-w-md p-6 rounded-xl border border-slate-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">Request Ingredients (Restaurant)</h3>
+            <form onsubmit="app.handleRequestRestaurant(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Item</label>
+                    <select id="kitchenSelect" name="item_name"
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Quantity Needed</label>
+                    <input type="number" name="quantity" min="1" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:border-accent focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="app.closeModal('kitchenModal')"
+                        class="px-4 py-2 text-slate-300 hover:text-white transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded font-semibold transition">Submit
+                        Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div id="reportsModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div class="bg-panel w-full max-w-2xl p-6 rounded-xl border border-slate-600 shadow-2xl">
+            <header class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Inventory Reports</h3>
+                <button onclick="app.closeModal('reportsModal')" class="text-slate-400 hover:text-white">✕</button>
+            </header>
+            <div class="bg-slate-800 p-4 rounded-lg">
+                <canvas id="inventoryChart"></canvas>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="app.closeModal('reportsModal')"
+                    class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+        <div class="bg-panel w-full max-w-md p-6 rounded-xl border border-slate-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">System Settings</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-slate-800 rounded">
+                    <span class="text-slate-300">Dark Mode</span>
+                    <button class="w-12 h-6 bg-accent rounded-full relative"><span
+                            class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span></button>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-slate-800 rounded">
+                    <span class="text-slate-300">Email Notifications</span>
+                    <button class="w-12 h-6 bg-slate-600 rounded-full relative"><span
+                            class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></span></button>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Low Stock Threshold</label>
+                    <input type="number" value="10"
+                        class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="app.closeModal('settingsModal')"
+                    class="px-4 py-2 text-slate-300 hover:text-white transition">Cancel</button>
+                <button onclick="app.closeModal('settingsModal'); app.showToast('Settings saved', 'success')"
+                    class="bg-accent hover:bg-sky-400 text-slate-900 px-4 py-2 rounded font-semibold transition">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'inventory/js/app.js' %}"></script>
+</body>
+
+</html>

@@ -1395,8 +1395,7 @@ class RestoKitchen:
             print("1. View All Inventory")
             print("2. View Low Stock Items")
             print("3. View Inventory by Category")
-            print("4. Add Stock (Restock)")
-            print("5. Back to Main Menu")
+            print("4. Back to Main Menu")
 
             try:
                 choice = int(input("\nSelect option: "))
@@ -1408,8 +1407,6 @@ class RestoKitchen:
                 elif choice == 3:
                     self.view_inventory_by_category()
                 elif choice == 4:
-                    self.restock_item()
-                elif choice == 5:
                     break
                 else:
                     print("Invalid option!")
@@ -1539,53 +1536,6 @@ class RestoKitchen:
             print("Invalid input!")
         except Exception as e:
             print(f"Error: {e}")
-
-    def restock_item(self):
-        """Add stock to inventory"""
-        try:
-            item_id = int(input("\nEnter item ID to restock: "))
-
-            query = "SELECT * FROM inventory_items WHERE item_id = %s"
-            cursor.execute(query, (item_id,))
-            item = cursor.fetchone()
-
-            if not item:
-                print("Item not found!")
-                return
-
-            print(f"\nItem: {item['item_name']}")
-            print(f"Current Stock: {float(item['quantity_in_stock']):.2f}")
-
-            quantity = float(input("Enter quantity to add: "))
-
-            if quantity <= 0:
-                print("Invalid quantity!")
-                return
-
-            update_query = """
-            UPDATE inventory_items 
-            SET quantity_in_stock = quantity_in_stock + %s
-            WHERE item_id = %s
-            """
-            cursor.execute(update_query, (quantity, item_id))
-
-            transaction_query = """
-            INSERT INTO inventory_transactions 
-            (item_id, transaction_type, quantity, transaction_date)
-            VALUES (%s, 'restock', %s, NOW())
-            """
-            cursor.execute(transaction_query, (item_id, quantity))
-
-            db.conn.commit()
-
-            print(f"\n✓ Successfully added {quantity:.2f} units to {item['item_name']}")
-            print(f"New stock level: {float(item['quantity_in_stock']) + quantity:.2f}")
-
-        except ValueError:
-            print("Invalid input!")
-        except Exception as e:
-            db.conn.rollback()
-            print(f"Error restocking: {e}")
 
 
 if __name__ == "__main__":
