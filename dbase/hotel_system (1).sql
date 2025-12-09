@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 09, 2025 at 01:03 PM
+-- Generation Time: Dec 09, 2025 at 03:26 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.0.28
 
@@ -200,6 +200,7 @@ CREATE TABLE `inventory_items` (
   `item_name` varchar(150) NOT NULL,
   `category_id` int(11) NOT NULL,
   `quantity_in_stock` decimal(10,2) DEFAULT 0.00,
+  `unit` varchar(20) DEFAULT 'pcs',
   `minimum_quantity` decimal(10,2) DEFAULT 10.00,
   `unit_cost` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -208,47 +209,47 @@ CREATE TABLE `inventory_items` (
 -- Dumping data for table `inventory_items`
 --
 
-INSERT INTO `inventory_items` (`item_id`, `item_name`, `category_id`, `quantity_in_stock`, `minimum_quantity`, `unit_cost`) VALUES
-(1, 'Toilet Paper', 1, 500.00, 100.00, 0.50),
-(2, 'Bed Sheets', 2, 200.00, 50.00, 15.00),
-(3, 'Shampoo', 3, 150.00, 40.00, 2.00),
-(4, 'Towels', 2, 300.00, 80.00, 8.00),
-(5, 'Coffee Beans', 5, 50.00, 10.00, 20.00),
-(6, 'Rice', 4, 96.50, 25.00, 3.00),
-(7, 'Romaine Lettuce', 4, 50.00, 15.00, 3.50),
-(8, 'Caesar Dressing', 4, 30.00, 10.00, 8.00),
-(9, 'Parmesan Cheese', 4, 25.00, 8.00, 12.00),
-(10, 'Croutons', 4, 40.00, 10.00, 4.00),
-(11, 'Tomatoes', 4, 80.00, 20.00, 2.50),
-(12, 'Cream', 4, 45.00, 15.00, 6.00),
-(13, 'Onions', 4, 60.00, 20.00, 1.50),
-(14, 'Vegetable Stock', 4, 35.00, 10.00, 4.50),
-(15, 'Salmon Fillet', 4, 30.00, 10.00, 25.00),
-(16, 'Lemon', 4, 50.00, 15.00, 1.00),
-(17, 'Butter', 4, 40.00, 12.00, 5.00),
-(18, 'Herbs (Mixed)', 4, 25.00, 8.00, 7.00),
-(19, 'Beef Tenderloin', 4, 35.00, 10.00, 30.00),
-(20, 'Garlic', 4, 45.00, 15.00, 2.00),
-(21, 'Black Pepper', 4, 20.00, 5.00, 8.00),
-(22, 'Olive Oil', 4, 55.00, 18.00, 10.00),
-(23, 'Flour', 4, 100.00, 30.00, 2.00),
-(24, 'Cocoa Powder', 4, 30.00, 10.00, 15.00),
-(25, 'Sugar', 4, 80.00, 25.00, 1.80),
-(26, 'Eggs', 4, 120.00, 40.00, 0.50),
-(27, 'Chocolate Chips', 4, 25.00, 8.00, 12.00),
-(28, 'Espresso Beans', 5, 40.00, 12.00, 22.00),
-(29, 'Milk', 5, 100.00, 30.00, 3.50),
-(30, 'Fresh Oranges', 4, 70.00, 20.00, 4.00),
-(31, 'Bread', 4, 60.00, 20.00, 2.50),
-(32, 'Jam', 4, 35.00, 10.00, 5.00),
-(33, 'Bacon', 4, 40.00, 12.00, 8.00),
-(34, 'Sausages', 4, 35.00, 10.00, 9.00),
-(35, 'Salt', 4, 50.00, 15.00, 1.00),
-(36, 'Potatoes', 4, 90.00, 25.00, 2.20),
-(37, 'Vegetables (Mixed)', 4, 65.00, 20.00, 4.50),
-(38, 'Tea Bags', 5, 200.00, 50.00, 0.30),
-(39, 'Mineral Water', 5, 150.00, 40.00, 1.00),
-(40, 'Soft Drinks', 5, 100.00, 30.00, 1.50);
+INSERT INTO `inventory_items` (`item_id`, `item_name`, `category_id`, `quantity_in_stock`, `unit`, `minimum_quantity`, `unit_cost`) VALUES
+(1, 'Toilet Paper', 1, 500.00, 'rolls', 100.00, 0.50),
+(2, 'Bed Sheets', 2, 200.00, 'pcs', 50.00, 15.00),
+(3, 'Shampoo', 3, 150.00, 'bottles', 40.00, 2.00),
+(4, 'Towels', 2, 300.00, 'pcs', 80.00, 8.00),
+(5, 'Coffee Beans', 5, 50.00, 'kg', 10.00, 20.00),
+(6, 'Rice', 4, 95.20, 'kg', 25.00, 3.00),
+(7, 'Romaine Lettuce', 4, 50.00, 'kg', 15.00, 3.50),
+(8, 'Caesar Dressing', 4, 30.00, 'liters', 10.00, 8.00),
+(9, 'Parmesan Cheese', 4, 25.00, 'kg', 8.00, 12.00),
+(10, 'Croutons', 4, 40.00, 'kg', 10.00, 4.00),
+(11, 'Tomatoes', 4, 80.00, 'kg', 20.00, 2.50),
+(12, 'Cream', 4, 45.00, 'liters', 15.00, 6.00),
+(13, 'Onions', 4, 60.00, 'kg', 20.00, 1.50),
+(14, 'Vegetable Stock', 4, 35.00, 'liters', 10.00, 4.50),
+(15, 'Salmon Fillet', 4, 29.50, 'kg', 10.00, 25.00),
+(16, 'Lemon', 4, 49.96, 'kg', 15.00, 1.00),
+(17, 'Butter', 4, 39.96, 'kg', 12.00, 5.00),
+(18, 'Herbs (Mixed)', 4, 24.98, 'kg', 8.00, 7.00),
+(19, 'Beef Tenderloin', 4, 35.00, 'kg', 10.00, 30.00),
+(20, 'Garlic', 4, 45.00, 'kg', 15.00, 2.00),
+(21, 'Black Pepper', 4, 20.00, 'kg', 5.00, 8.00),
+(22, 'Olive Oil', 4, 55.00, 'liters', 18.00, 10.00),
+(23, 'Flour', 4, 100.00, 'kg', 30.00, 2.00),
+(24, 'Cocoa Powder', 4, 30.00, 'kg', 10.00, 15.00),
+(25, 'Sugar', 4, 80.00, 'kg', 25.00, 1.80),
+(26, 'Eggs', 4, 120.00, 'pcs', 40.00, 0.50),
+(27, 'Chocolate Chips', 4, 25.00, 'kg', 8.00, 12.00),
+(28, 'Espresso Beans', 5, 40.00, 'kg', 12.00, 22.00),
+(29, 'Milk', 5, 100.00, 'liters', 30.00, 3.50),
+(30, 'Fresh Oranges', 4, 68.50, 'kg', 20.00, 4.00),
+(31, 'Bread', 4, 60.00, 'loaves', 20.00, 2.50),
+(32, 'Jam', 4, 35.00, 'jars', 10.00, 5.00),
+(33, 'Bacon', 4, 40.00, 'kg', 12.00, 8.00),
+(34, 'Sausages', 4, 35.00, 'kg', 10.00, 9.00),
+(35, 'Salt', 4, 50.00, 'kg', 15.00, 1.00),
+(36, 'Potatoes', 4, 90.00, 'kg', 25.00, 2.20),
+(37, 'Vegetables (Mixed)', 4, 65.00, 'kg', 20.00, 4.50),
+(38, 'Tea Bags', 5, 200.00, 'boxes', 50.00, 0.30),
+(39, 'Mineral Water', 5, 150.00, 'bottles', 40.00, 1.00),
+(40, 'Soft Drinks', 5, 100.00, 'cans', 30.00, 1.50);
 
 -- --------------------------------------------------------
 
@@ -275,7 +276,14 @@ INSERT INTO `inventory_transactions` (`transaction_id`, `item_id`, `transaction_
 (4, 6, 'usage', 0.50, '2025-11-01 03:32:49'),
 (5, 6, 'usage', 1.00, '2025-11-01 03:33:33'),
 (6, 6, 'usage', 1.00, '2025-11-01 03:38:25'),
-(7, 6, 'usage', 1.00, '2025-11-01 03:53:51');
+(7, 6, 'usage', 1.00, '2025-11-01 03:53:51'),
+(8, 6, 'usage', 1.00, '2025-12-09 13:08:35'),
+(9, 15, 'usage', -0.50, '2025-12-09 14:12:32'),
+(10, 16, 'usage', -0.04, '2025-12-09 14:12:32'),
+(11, 17, 'usage', -0.04, '2025-12-09 14:12:32'),
+(12, 18, 'usage', -0.02, '2025-12-09 14:12:32'),
+(13, 6, 'usage', -0.30, '2025-12-09 14:12:32'),
+(14, 30, 'usage', -1.50, '2025-12-09 14:14:27');
 
 -- --------------------------------------------------------
 
@@ -377,6 +385,57 @@ INSERT INTO `menu_items` (`menu_item_id`, `item_name`, `category_id`, `price`, `
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `menu_item_ingredients`
+--
+
+CREATE TABLE `menu_item_ingredients` (
+  `ingredient_id` int(11) NOT NULL,
+  `menu_item_id` int(11) NOT NULL,
+  `inventory_item_id` int(11) NOT NULL,
+  `quantity_needed` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `menu_item_ingredients`
+--
+
+INSERT INTO `menu_item_ingredients` (`ingredient_id`, `menu_item_id`, `inventory_item_id`, `quantity_needed`) VALUES
+(1, 1, 7, 0.15),
+(2, 1, 8, 0.05),
+(3, 1, 9, 0.03),
+(4, 1, 10, 0.02),
+(5, 2, 11, 0.20),
+(6, 2, 12, 0.05),
+(7, 2, 13, 0.03),
+(8, 2, 14, 0.10),
+(9, 3, 15, 0.25),
+(10, 3, 16, 0.02),
+(11, 3, 17, 0.02),
+(12, 3, 18, 0.01),
+(13, 3, 6, 0.15),
+(14, 4, 19, 0.30),
+(15, 4, 20, 0.01),
+(16, 4, 21, 0.01),
+(17, 4, 22, 0.02),
+(18, 4, 36, 0.20),
+(19, 5, 23, 0.10),
+(20, 5, 24, 0.05),
+(21, 5, 25, 0.08),
+(22, 5, 26, 2.00),
+(23, 5, 27, 0.05),
+(24, 6, 28, 0.02),
+(25, 6, 29, 0.15),
+(26, 7, 30, 0.30),
+(27, 8, 31, 0.10),
+(28, 8, 32, 0.03),
+(29, 8, 33, 0.05),
+(30, 8, 34, 0.05),
+(31, 8, 26, 2.00),
+(32, 8, 7, 0.30);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `order_items`
 --
 
@@ -401,7 +460,10 @@ INSERT INTO `order_items` (`order_item_id`, `order_id`, `menu_item_id`, `quantit
 (6, 3, 2, 1, 160.00),
 (7, 4, 3, 2, 350.00),
 (8, 5, 1, 2, 220.00),
-(9, 6, 1, 2, 220.00);
+(9, 6, 1, 2, 220.00),
+(10, 7, 4, 2, 350.00),
+(11, 8, 3, 2, 350.00),
+(12, 9, 7, 5, 90.00);
 
 -- --------------------------------------------------------
 
@@ -451,7 +513,10 @@ INSERT INTO `restaurant_orders` (`order_id`, `booking_id`, `guest_id`, `order_ty
 (3, 1, 1, 'room_service', 160.00, 'pending', '2025-11-01 03:32:49'),
 (4, 1, 1, 'dine_in', 700.00, 'pending', '2025-11-01 03:33:33'),
 (5, 1, 1, 'dine_in', 440.00, 'pending', '2025-11-01 03:38:25'),
-(6, 1, 1, 'room_service', 440.00, 'pending', '2025-11-01 03:53:51');
+(6, 1, 1, 'room_service', 440.00, 'pending', '2025-11-01 03:53:51'),
+(7, 1, 1, 'room_service', 700.00, 'pending', '2025-12-09 13:08:35'),
+(8, 1, 1, 'dine_in', 700.00, 'pending', '2025-12-09 14:12:32'),
+(9, 1, 1, 'room_service', 450.00, 'pending', '2025-12-09 14:14:27');
 
 -- --------------------------------------------------------
 
@@ -654,6 +719,14 @@ ALTER TABLE `menu_items`
   ADD KEY `category_id` (`category_id`);
 
 --
+-- Indexes for table `menu_item_ingredients`
+--
+ALTER TABLE `menu_item_ingredients`
+  ADD PRIMARY KEY (`ingredient_id`),
+  ADD KEY `menu_item_id` (`menu_item_id`),
+  ADD KEY `inventory_item_id` (`inventory_item_id`);
+
+--
 -- Indexes for table `order_items`
 --
 ALTER TABLE `order_items`
@@ -760,7 +833,7 @@ ALTER TABLE `inventory_items`
 -- AUTO_INCREMENT for table `inventory_transactions`
 --
 ALTER TABLE `inventory_transactions`
-  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `loyalty_program`
@@ -787,10 +860,16 @@ ALTER TABLE `menu_items`
   MODIFY `menu_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `menu_item_ingredients`
+--
+ALTER TABLE `menu_item_ingredients`
+  MODIFY `ingredient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+
+--
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -802,7 +881,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `restaurant_orders`
 --
 ALTER TABLE `restaurant_orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -894,6 +973,13 @@ ALTER TABLE `maintenance_requests`
 --
 ALTER TABLE `menu_items`
   ADD CONSTRAINT `menu_items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `menu_categories` (`category_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `menu_item_ingredients`
+--
+ALTER TABLE `menu_item_ingredients`
+  ADD CONSTRAINT `menu_item_ingredients_ibfk_1` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`menu_item_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `menu_item_ingredients_ibfk_2` FOREIGN KEY (`inventory_item_id`) REFERENCES `inventory_items` (`item_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `order_items`
